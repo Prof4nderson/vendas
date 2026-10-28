@@ -1,0 +1,4 @@
+ALTER TABLE `itens_vendas` ADD CONSTRAINT `itens_vendas_vendaId_vendas_id_fk` FOREIGN KEY (`vendaId`) REFERENCES `vendas`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `itens_vendas` ADD CONSTRAINT `itens_vendas_produtoId_produtos_id_fk` FOREIGN KEY (`produtoId`) REFERENCES `produtos`(`id`) ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `vendas` ADD CONSTRAINT `vendas_clienteId_clientes_id_fk` FOREIGN KEY (`clienteId`) REFERENCES `clientes`(`id`) ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `vendas` ADD CONSTRAINT `vendas_usuarioId_usuarios_id_fk` FOREIGN KEY (`usuarioId`) REFERENCES `usuarios`(`id`) ON DELETE set null ON UPDATE no action;
