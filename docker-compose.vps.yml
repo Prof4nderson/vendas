@@ -1,0 +1,56 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vendaflow-frontend
+    restart: unless-stopped
+    env_file:
+      - .env.vps
+    environment:
+      NODE_ENV: production
+      PORT: 3038
+    ports:
+      - "3038:3038"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  spring:
+    build:
+      context: .
+      dockerfile: Dockerfile.spring
+    container_name: vendaflow-spring
+    restart: unless-stopped
+    env_file:
+      - .env.vps
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-banco1}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.vps}
+      JPA_DDL_AUTO: update
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    container_name: vendaflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-banco1}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.vps}
+    volumes:
+      - vendaflow_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  vendaflow_postgres_data:
