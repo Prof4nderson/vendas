@@ -45,7 +45,7 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
 
 export async function getLocalAuthUser(): Promise<User | undefined> {
   const db = requireDb(await getDb());
-  const account = await db.select().from(usuarios).where(eq(usuarios.login, "admin")).limit(1);
+  const account = await db.select().from(usuarios).where(eq(usuarios.login, process.env.LOCAL_ADMIN_LOGIN || "admin")).limit(1);
   if (!account[0]) return undefined;
   const now = new Date();
   return { id: account[0].id, openId: "local-admin", name: account[0].nome, email: account[0].email, loginMethod: "local", role: "admin", createdAt: now, updatedAt: now, lastSignedIn: now };

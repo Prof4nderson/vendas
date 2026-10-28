@@ -38,21 +38,28 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     login: publicProcedure.input(localLoginInput).mutation(async ({ input, ctx }) => {
-      if (process.env.NODE_ENV === "production" || process.env.MANUS_OAUTH_API_URL) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "O login local está disponível somente no desenvolvimento." });
+      const localLoginEnabled = process.env.LOCAL_LOGIN_ENABLED === "true";
+      if (!localLoginEnabled && (process.env.NODE_ENV === "production" || process.env.MANUS_OAUTH_API_URL)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Login local desabilitado. Configure LOCAL_LOGIN_ENABLED=true ou habilite o OAuth Manus." });
       }
       const db = await database();
-      const adminPassword = hashPassword("123456");
-      const existing = await db.select().from(usuarios).where(eq(usuarios.login, "admin")).limit(1);
+      const adminLogin = process.env.LOCAL_ADMIN_LOGIN || "admin";
+      const configuredPassword = process.env.LOCAL_ADMIN_PASSWORD;
+      const adminPassword = configuredPassword || (process.env.NODE_ENV === "production" ? "" : "123456");
+      if (input.login !== adminLogin) throw new TRPCError({ code: "UNAUTHORIZED", message: "Login ou senha inválidos." });
+      const existing = await db.select().from(usuarios).where(eq(usuarios.login, adminLogin)).limit(1);
       if (!existing[0]) {
-        await db.insert(usuarios).values({ nome: "Administrador", cpf: "00000000000", login: "admin", senha: adminPassword, email: "admin@localhost" });
+        if (!adminPassword) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Defina LOCAL_ADMIN_PASSWORD antes do primeiro login em produção." });
+        await db.insert(usuarios).values({ nome: process.env.LOCAL_ADMIN_NAME || "Administrador", cpf: "00000000000", login: adminLogin, senha: hashPassword(adminPassword), email: process.env.LOCAL_ADMIN_EMAIL || "admin@localhost" });
+      } else if (configuredPassword && input.senha === configuredPassword && !passwordMatches(configuredPassword, existing[0].senha)) {
+        await db.update(usuarios).set({ senha: hashPassword(configuredPassword) }).where(eq(usuarios.id, existing[0].id));
       }
       const account = await db.select().from(usuarios).where(eq(usuarios.login, input.login)).limit(1);
       if (!account[0] || !passwordMatches(input.senha, account[0].senha)) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Login ou senha inválidos." });
       }
       const token = await sdk.createSessionToken("local-admin", { name: account[0].nome });
-      ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), secure: false, sameSite: "lax" });
+      ctx.res.cookie(COOKIE_NAME, token, getSessionCookieOptions(ctx.req));
       return { success: true, user: { nome: account[0].nome, login: account[0].login } };
     }),
     logout: publicProcedure.mutation(({ ctx }) => {

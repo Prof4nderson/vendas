@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 
 export default function Login() {
   const [login, setLogin] = useState("admin");
-  const [senha, setSenha] = useState("123456");
+  const [senha, setSenha] = useState("");
   const utils = trpc.useUtils();
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async () => {
@@ -25,7 +25,7 @@ export default function Login() {
         <label className="form-field"><span>Senha<b>*</b></span><div className="login-input"><LockKeyhole size={17} /><input type="password" value={senha} onChange={event => setSenha(event.target.value)} autoComplete="current-password" placeholder="••••••" required /></div></label>
         <button className="button button-primary login-submit" type="submit" disabled={loginMutation.isPending}>{loginMutation.isPending ? "Entrando..." : <>Entrar no VendaFlow <ArrowRight size={17} /></>}</button>
       </form>
-      <div className="login-note"><ShieldCheck size={16} /><span>Modo local de desenvolvimento · administrador inicial: <strong>admin</strong> / <strong>123456</strong></span></div>
+      <div className="login-note"><ShieldCheck size={16} /><span>Use as credenciais administrativas configuradas no ambiente do servidor.</span></div>
     </motion.section>
   </main>;
 }

@@ -14,6 +14,9 @@ nano .env.vps
 ```
 
 Defina uma senha forte para `POSTGRES_PASSWORD`, o mesmo valor em `DB_PASSWORD` e um `MANUS_JWT_SECRET` longo.
+Defina também `LOCAL_LOGIN_ENABLED=true`, `LOCAL_ADMIN_LOGIN` e `LOCAL_ADMIN_PASSWORD`. Após subir os containers, acesse `https://vendaflow.professor-anderson.com` e use essas credenciais. Se o usuário ainda não existir na tabela `tb_usuarios`, ele será criado no primeiro login; se já existir, a senha configurada será aplicada quando o primeiro login usar o valor do ambiente.
+
+Não use `123456` em produção e não versione o arquivo `.env.vps`.
 
 ## 3. Build e execução
 

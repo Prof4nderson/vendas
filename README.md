@@ -80,7 +80,18 @@ docker compose --env-file .env.vps -f docker-compose.vps.yml up -d --build
 curl http://127.0.0.1:3038/api/health
 ```
 
+O `docker-compose.yml` padrão também possui os serviços com `build:`. Portanto, para construir sem informar um arquivo adicional, use:
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+Para produção com as credenciais do VPS, prefira `--env-file .env.vps -f docker-compose.vps.yml`.
+
 Configure o DNS `A` do domínio para o IP do VPS e use `deploy/nginx/vendaflow.professor-anderson.com.conf` como proxy reverso. O passo a passo completo está em [`deploy/README.md`](deploy/README.md).
+
+O login local de produção é controlado por `LOCAL_LOGIN_ENABLED=true`. Configure `LOCAL_ADMIN_LOGIN` e `LOCAL_ADMIN_PASSWORD` no `.env.vps`; o usuário administrativo é criado automaticamente no primeiro login se ainda não existir, ou tem a senha sincronizada com o ambiente quando já existe. OAuth Manus pode ser usado como alternativa quando suas variáveis de integração estiverem configuradas.
 
 Para configurar o Spring Boot:
 

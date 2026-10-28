@@ -1,18 +1,63 @@
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vendaflow-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3038
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/banco1}
+      LOCAL_DEV_AUTH: ${LOCAL_DEV_AUTH:-false}
+      LOCAL_DEV_OPEN_ID: ${LOCAL_DEV_OPEN_ID:-local-admin}
+      LOCAL_LOGIN_ENABLED: ${LOCAL_LOGIN_ENABLED:-false}
+      LOCAL_ADMIN_LOGIN: ${LOCAL_ADMIN_LOGIN:-admin}
+      LOCAL_ADMIN_PASSWORD: ${LOCAL_ADMIN_PASSWORD:-}
+      LOCAL_ADMIN_NAME: ${LOCAL_ADMIN_NAME:-Administrador}
+      LOCAL_ADMIN_EMAIL: ${LOCAL_ADMIN_EMAIL:-admin@localhost}
+      MANUS_JWT_SECRET: ${MANUS_JWT_SECRET:-troque-este-segredo}
+      MANUS_PROJECT_ID: ${MANUS_PROJECT_ID:-}
+      MANUS_OAUTH_API_URL: ${MANUS_OAUTH_API_URL:-}
+      OWNER_OPEN_ID: ${OWNER_OPEN_ID:-}
+    ports:
+      - "3038:3038"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  spring:
+    build:
+      context: .
+      dockerfile: Dockerfile.spring
+    container_name: vendaflow-spring
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-banco1}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JPA_SHOW_SQL: ${JPA_SHOW_SQL:-false}
+      SERVER_ERROR_INCLUDE_MESSAGE: never
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:16
     container_name: vendaflow-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: banco1
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB:-banco1}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - vendaflow_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d banco1"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 20
