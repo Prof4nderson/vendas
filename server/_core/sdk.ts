@@ -212,7 +212,9 @@ class SDKServer {
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
 
-      const localMode = process.env.LOCAL_DEV_AUTH === "true" && !ENV.isProduction && !ENV.oAuthServerUrl;
+      const localMode =
+        (!ENV.isProduction && process.env.LOCAL_DEV_AUTH === "true" && !ENV.oAuthServerUrl) ||
+        (process.env.LOCAL_LOGIN_ENABLED === "true" && !ENV.oAuthServerUrl);
       if (
         !isNonEmptyString(openId) ||
         ((!isNonEmptyString(appId) || appId !== ENV.appId) && !localMode) ||
@@ -283,7 +285,10 @@ class SDKServer {
       throw ForbiddenError("Invalid session cookie");
     }
 
-    if (process.env.LOCAL_DEV_AUTH === "true" && !ENV.isProduction && !ENV.oAuthServerUrl && session.openId === "local-admin") {
+    const localLoginMode =
+      (!ENV.isProduction && process.env.LOCAL_DEV_AUTH === "true" && !ENV.oAuthServerUrl) ||
+      (process.env.LOCAL_LOGIN_ENABLED === "true" && !ENV.oAuthServerUrl);
+    if (localLoginMode && session.openId === "local-admin") {
       const localUser = await db.getLocalAuthUser();
       if (!localUser) throw ForbiddenError("Usuário admin local não encontrado");
       return localUser;
